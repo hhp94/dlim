@@ -119,3 +119,48 @@ model_comparison <- function(fit, null = "DLM", x, B, conf.level = 0.95){
   
   return(ifelse(obs_LLR > crit_LLR, "reject", "FTR"))
 }
+
+#' Null DLM Fit
+#' @description Return DLM fit 
+#' @export
+#' @import dlnm
+#' @import mgcv
+#' @param fit dlim object (must be fit with REML)
+#' @param x exposure
+#' @param ... other args passed to [mgcv::gam]
+#' @return The refitted dlm fit
+null_dlm_fit <- function (fit, x, ...) {
+  method <- fit$fit$method
+  if (method != "REML") {
+    stop("method not supported. Only REML is currently supported")
+  }
+  df_l <- fit$cb$df_l
+  df_m <- fit$cb$df_m
+  model_type <- attr(fit, "model_type")
+  y <- fit$fit$model$y
+  modifiers <- fit$fit$model$Z[, 2]
+  if (dim(fit$fit$model$Z)[2] > 2) {
+    z <- fit$fit$model$Z[, 3:ncol(fit$fit$model$Z)]
+  }
+  else {
+    z <- NULL
+  }
+  
+  cb_dlm <- crossbasis(
+    x = x,
+    argvar = list(fun = "lin"),
+    arglag = list(fun = "ps", df = df_l)
+  )
+  penalty <- cbPen(cb_dlm)
+  covariates <- as.data.frame(cbind(z, modifiers))
+  design2 <- model.matrix(~ ., model.frame(~ ., covariates, na.action = na.pass))
+  initial_null <- gam(
+    y ~ cb_dlm + design2,
+    paraPen = list(cb_dlm = penalty),
+    method = method,
+    family = fit$fit$family,
+    ...
+  )
+  
+  return(initial_null)
+}
