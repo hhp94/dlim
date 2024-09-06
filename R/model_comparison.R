@@ -125,15 +125,12 @@ model_comparison <- function(fit, null = "DLM", x, B, conf.level = 0.95){
 #' @export
 #' @import dlnm
 #' @import mgcv
-#' @param fit dlim object (must be fit with REML)
+#' @param fit dlim object
 #' @param x exposure
 #' @param ... other args passed to [mgcv::gam]
 #' @return The refitted dlm fit
 null_dlm_fit <- function (fit, x, ...) {
   method <- fit$fit$method
-  if (method != "REML") {
-    stop("method not supported. Only REML is currently supported")
-  }
   df_l <- fit$cb$df_l
   df_m <- fit$cb$df_m
   model_type <- attr(fit, "model_type")
