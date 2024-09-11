@@ -7,7 +7,7 @@
 null_dlm_fit(fit, x, ...)
 }
 \arguments{
-\item{fit}{dlim object (must be fit with REML)}
+\item{fit}{dlim object}
 
 \item{x}{exposure}
 

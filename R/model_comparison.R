@@ -161,3 +161,50 @@ null_dlm_fit <- function (fit, x, ...) {
   
   return(initial_null)
 }
+
+#' Standard DLM Fit
+#' @description Return DLM fit 
+#' @export
+#' @import dlnm
+#' @import mgcv
+#' @param fit dlim object
+#' @param x exposure
+#' @param arg_var see [dlnm::crossbasis]
+#' @param arg_lag see [dlnm::crossbasis]
+#' @param z covariate matrix
+#' @param modifiers modifier
+#' @param y outcome
+#' @param family family object or family
+#' @param method passed to [mgcv::gam], REML or ML or GCV etc
+#' @param ... other args passed to [mgcv::gam]
+#' @return The refitted dlm fit
+standard_dlm <- function(
+    x, 
+    arg_var = list(fun = "lin"), 
+    arg_lag = list(fun = "ps", df = 20), 
+    z, 
+    modifiers, 
+    y, 
+    family, 
+    method, 
+    ...) {
+  cb_dlm <- crossbasis(
+    x = x,
+    argvar = arg_var,
+    arglag = arg_lag
+  )
+  penalty <- cbPen(cb_dlm)
+  covariates <- as.data.frame(cbind(z, modifiers))
+  design2 <- model.matrix(~., model.frame(~., covariates, na.action = na.pass))
+
+  initial_null <- gam(
+    y ~ 0 + cb_dlm + design2,
+    paraPen = list(cb_dlm = penalty),
+    method = method,
+    family = family,
+    ...
+  )
+
+  initial_null$cb_dlm <- cb_dlm
+  return(initial_null)
+}
